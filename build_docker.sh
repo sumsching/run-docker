@@ -110,18 +110,18 @@ while getopts "ha:b:f:n:u:g:EV:oO:" opt; do
 done
 
 if [[ "${DO_OUTPUT_ENV_FILE}" == "yes" ]]
- if [[ "${OUTPUT_ENV_FILE}" == "-" ]]
- then
-   echo "DOCKER_IMAGE=${DOCKER_IMAGE}"
-   echo "DOCKERFILE=${DOCKERFILE}"
-   echo "BUILD_CONTEXT=${BUILD_CONTEXT}"
-   echo "ADDITIONAL_BUILD_ARGS=\"${OUTPUT_BUILD_ARGS[@]}\""
- fi
-then
-  echo "DOCKER_IMAGE=${DOCKER_IMAGE}" > "${OUTPUT_ENV_FILE}"
-  echo "DOCKERFILE=${DOCKERFILE}" >> "${OUTPUT_ENV_FILE}"
-  echo "BUILD_CONTEXT=${BUILD_CONTEXT}" >> "${OUTPUT_ENV_FILE}"
-  echo "ADDITIONAL_BUILD_ARGS=\"${OUTPUT_BUILD_ARGS[@]}\"" >> "${OUTPUT_ENV_FILE}"
+  if [[ "${OUTPUT_ENV_FILE}" == "-" ]]
+  then
+    echo "DOCKER_IMAGE=${DOCKER_IMAGE}"
+    echo "DOCKERFILE=${DOCKERFILE}"
+    echo "BUILD_CONTEXT=${BUILD_CONTEXT}"
+    echo "ADDITIONAL_BUILD_ARGS=\"${OUTPUT_BUILD_ARGS[@]}\""
+  else
+    echo "DOCKER_IMAGE=${DOCKER_IMAGE}" > "${OUTPUT_ENV_FILE}"
+    echo "DOCKERFILE=${DOCKERFILE}" >> "${OUTPUT_ENV_FILE}"
+    echo "BUILD_CONTEXT=${BUILD_CONTEXT}" >> "${OUTPUT_ENV_FILE}"
+    echo "ADDITIONAL_BUILD_ARGS=\"${OUTPUT_BUILD_ARGS[@]}\"" >> "${OUTPUT_ENV_FILE}"
+  fi
 fi
 
 set -x
