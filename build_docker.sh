@@ -31,9 +31,9 @@ OUTPUT_ENV_FILE="${ENV_FILE}"
 OUTPUT_BUILD_ARGS=""
 
 #enable other env file being sourced before option handling, so options are not overwritten by env file
-while getopts "EV:" opt 2>/dev/null; do  #ignoring "illegal" options passed to getopts here
+while getopts "EF:" opt 2>/dev/null; do  #ignoring "illegal" options passed to getopts here
   case ${opt} in
-    V)
+    F)
       USE_ENV=yes
       ENV_FILE="${OPTARG}"
       ;;
@@ -92,7 +92,7 @@ while getopts "ha:b:f:n:u:g:EV:oO:" opt; do
     E)
       #just ignore, because -E is handled in former getopts call
       ;;
-    V)
+    F)
       #just ignore, because -V is handled in former getopts call
       ;;
     o)
