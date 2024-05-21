@@ -20,7 +20,6 @@ function usage
   echo "$0 -n custom_image_with_proxy -f build/Dockerfile.with_proxy -b build -u 1001 -g 1001"
 }
 
-readonly SCRIPT_DIR=$(dirname $(readlink -f $0)) #real location of the script. Enables symlink compatibility with directory dependent Dockerfile
 BUILD_CONTEXT=.
 DOCKERFILE=${BUILD_CONTEXT}/Dockerfile
 BUILD_ARGS=""
@@ -58,7 +57,6 @@ while getopts "ha:b:f:n:u:g:" opt; do
   esac
 done
 
-cd "${SCRIPT_DIR}"
 
 set -x
 docker build ${TAG_OPTION} ${IMAGE_NAME} ${BUILD_ARGS} -f "${DOCKERFILE}" "${BUILD_CONTEXT}"

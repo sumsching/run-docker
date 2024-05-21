@@ -42,9 +42,6 @@ function get_default_container_name
   echo "${container_name_stem}_${new_container_number}"
 }
 
-
-
-readonly SCRIPT_DIR=$(dirname $(readlink -f $0))
 readonly DOCKER_WORKING_DIR_DEFAULT=/root/source
 DOCKER_USER=root
 DOCKER_WORKING_DIR="${DOCKER_WORKING_DIR_DEFAULT}"
