@@ -24,8 +24,44 @@ BUILD_CONTEXT=.
 DOCKERFILE=${BUILD_CONTEXT}/Dockerfile
 BUILD_ARGS=""
 TAG_OPTION=""
+USE_ENV=yes
+ENV_FILE=buildd.env
+DO_OUTPUT_ENV_FILE=no
+OUTPUT_ENV_FILE="${ENV_FILE}"
+OUTPUT_BUILD_ARGS=""
 
-while getopts "ha:b:f:n:u:g:" opt; do
+#enable other env file being sourced before option handling, so options are not overwritten by env file
+while getopts "EV:" opt 2>/dev/null; do  #ignoring "illegal" options passed to getopts here
+  case ${opt} in
+    V)
+      USE_ENV=yes
+      ENV_FILE="${OPTARG}"
+      ;;
+    E)
+      USE_ENV=no
+      ;;
+  esac
+done
+OPTIND=0  #allows second getopts call
+
+######## handle variables from env file ###########
+if [[ "${USE_ENV}" == "yes" && -f "${ENV_FILE}" ]]
+then
+  source "${ENV_FILE}"
+  for arg in ${ADDITIONAL_BUILD_ARGS[@]}
+  do
+    BUILD_ARGS+=" --build-arg ${arg}"
+    OUTPUT_BUILD_ARGS+=" ${arg}"  #The output should include former env variables
+  done
+  if [ ! -z "${DOCKER_IMAGE}" ]
+  then
+    TAG_OPTION="-t"
+  fi
+fi
+
+
+
+while getopts "ha:b:f:n:u:g:EV:oO:" opt; do
   case ${opt} in
     h)
       usage
@@ -33,6 +69,7 @@ while getopts "ha:b:f:n:u:g:" opt; do
       ;;
     a)
       BUILD_ARGS+=" --build-arg ${OPTARG}"
+      OUTPUT_BUILD_ARGS+=" ${OPTARG}"
       ;;
     b)
       BUILD_CONTEXT="${OPTARG}"
@@ -41,14 +78,29 @@ while getopts "ha:b:f:n:u:g:" opt; do
       DOCKERFILE="${OPTARG}"
       ;;
     n)
-      IMAGE_NAME="${OPTARG}"
+      DOCKER_IMAGE="${OPTARG}"
       TAG_OPTION="-t"
       ;;
     u)
       BUILD_ARGS+=" --build-arg UID=${OPTARG}"
+      OUTPUT_BUILD_ARGS+=" UID=${OPTARG}"
       ;;
     g)
       BUILD_ARGS+=" --build-arg GID=${OPTARG}"
+      OUTPUT_BUILD_ARGS+=" GID=${OPTARG}"
+      ;;
+    E)
+      #just ignore, because -E is handled in former getopts call
+      ;;
+    V)
+      #just ignore, because -V is handled in former getopts call
+      ;;
+    o)
+      DO_OUTPUT_ENV_FILE=yes
+      ;;
+    O)
+      DO_OUTPUT_ENV_FILE=yes
+      OUTPUT_ENV_FILE="${OPTARG}"
       ;;
     *)
       usage >&2
@@ -57,6 +109,20 @@ while getopts "ha:b:f:n:u:g:" opt; do
   esac
 done
 
+if [[ "${DO_OUTPUT_ENV_FILE}" == "yes" ]]
+ if [[ "${OUTPUT_ENV_FILE}" == "-" ]]
+ then
+   echo "DOCKER_IMAGE=${DOCKER_IMAGE}"
+   echo "DOCKERFILE=${DOCKERFILE}"
+   echo "BUILD_CONTEXT=${BUILD_CONTEXT}"
+   echo "ADDITIONAL_BUILD_ARGS=\"${OUTPUT_BUILD_ARGS[@]}\""
+ fi
+then
+  echo "DOCKER_IMAGE=${DOCKER_IMAGE}" > "${OUTPUT_ENV_FILE}"
+  echo "DOCKERFILE=${DOCKERFILE}" >> "${OUTPUT_ENV_FILE}"
+  echo "BUILD_CONTEXT=${BUILD_CONTEXT}" >> "${OUTPUT_ENV_FILE}"
+  echo "ADDITIONAL_BUILD_ARGS=\"${OUTPUT_BUILD_ARGS[@]}\"" >> "${OUTPUT_ENV_FILE}"
+fi
 
 set -x
-docker build ${TAG_OPTION} ${IMAGE_NAME} ${BUILD_ARGS} -f "${DOCKERFILE}" "${BUILD_CONTEXT}"
+docker build ${TAG_OPTION} ${DOCKER_IMAGE} ${BUILD_ARGS} -f "${DOCKERFILE}" "${BUILD_CONTEXT}"
