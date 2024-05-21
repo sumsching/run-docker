@@ -50,20 +50,81 @@ ADDITIONAL_VOLUME_FLAGS=""
 INTERACTIVE_FLAGS=""
 COMMAND=""
 DESTROY_FLAGS="--rm"  #destroy container after use
-RUNTIME_ENVIRONMENT_VARIABLES=""
+RUNTIME_ENVIRONMENT_VARIABLE_FLAGS=""
 DEVICE_FLAGS=""
 
-while getopts "hipn:v:V:e:d:u:w:" opt ; do
+USE_ENV=yes
+ENV_FILE=rund.env
+OUTPUT_ENV_FILE="${ENV_FILE}"
+DO_OUTPUT_ENV_FILE=no
+OUTPUT_ENVIRONMENT_VARIABLES=""
+OUTPUT_ADDITIONAL_VOLUMES=""
+OUTPUT_DEVICES=""
+OUTPUT_COMMAND=""
+
+#enable other env file being sourced before option handling, so options are not overwritten by env file
+while getopts "hic:pn:v:V:e:d:u:w:EF:oO:" opt 2>/dev/null; do  #ignoring "illegal" options passed to getopts here
+  case ${opt} in
+    V)
+      USE_ENV=yes
+      ENV_FILE="${OPTARG}"
+      ;;
+    E)
+      USE_ENV=no
+      ;;
+    *)
+      #ignore all other options for now
+      ;;
+  esac
+done
+OPTIND=0  #allows second getopts call
+
+######## handle variables from env file ###########
+if [[ "${USE_ENV}" == "yes" && -f "${ENV_FILE}" ]]
+then
+  source "${ENV_FILE}"
+  for var in ${RUNTIME_ENVIRONMENT_VARIABLES[@]}
+  do
+    RUNTIME_ENVIRONMENT_VARIABLE_FLAGS=+=" -e ${var}"
+    OUTPUT_ENVIRONMENT_VARIABLES+=" ${var}"  #The output should include former env variables
+  done
+  for volume in ${ADDITIONAL_VOLUMES[@]}
+  do
+    ADDITIONAL_VOLUME_FLAGS=+=" -v ${volume}"
+    OUTPUT_ADDITIONAL_VOLUMES+=" ${volume}"  #The output should include former env variables
+  done
+  for device in ${DEVICES[@]}
+  do
+      DEVICE_FLAGS=+=" -d ${device}"
+      OUTPUT_DEVICES+=" ${device}"  #The output should include former env variables
+  done
+  if [[ "${DO_INTERACTIVE}" == "yes" ]]
+  then
+    INTERACTIVE_FLAGS="-it"
+    SH_PREFIX="/bin/sh"
+  fi
+  if [[ "${DO_NOT_DESTROY}" == "yes" ]]
+  then
+    DESTROY_FLAGS=""
+  fi
+fi
+
+while getopts "hic:pn:v:V:e:d:u:w:EF:oO:" opt ; do
   case ${opt} in
     h)
       usage
       exit 0
       ;;
     i) #run container interactively
+      DO_INTERACTIVE=yes
       INTERACTIVE_FLAGS="-it"
-      COMMAND="/bin/bash"
+      SH_PREFIX="/bin/sh"
+      ;;
+    c)
+      COMMAND="${OPTARG}"
       ;;
     p) #persistent container. Do not destroy after use
+      DO_NOT_DESTROY=yes
       DESTROY_FLAGS=""
       ;;
     n)
@@ -76,7 +137,7 @@ while getopts "hipn:v:V:e:d:u:w:" opt ; do
       ADDITIONAL_VOLUME_FLAGS+="-v ${OPTARG} "
       ;;
     e)
-      RUNTIME_ENVIRONMENT_VARIABLES+=" -e ${OPTARG}"
+      RUNTIME_ENVIRONMENT_VARIABLE_FLAGS+=" -e ${OPTARG}"
       ;;
     d)
       DEVICE_FLAGS+="--device ${OPTARG} "
@@ -85,11 +146,24 @@ while getopts "hipn:v:V:e:d:u:w:" opt ; do
       DOCKER_USER="${OPTARG}"
       if [[ "${DOCKER_WORKING_DIR}" != "${DOCKER_WORKING_DIR_DEFAULT}" ]]  #only change working dir if it hasn't been set by -w already
       then
-	DOCKER_WORKING_DIR="/home/${DOCKER_USER}/source"
+	    DOCKER_WORKING_DIR="/home/${DOCKER_USER}/source"
       fi
       ;;
     w)
       DOCKER_WORKING_DIR="${OPTARG}"
+      ;;
+    E)
+      #just ignore, because -E is handled in former getopts call
+      ;;
+    F)
+      #just ignore, because -V is handled in former getopts call
+      ;;
+    o)
+      DO_OUTPUT_ENV_FILE=yes
+      ;;
+    O)
+      DO_OUTPUT_ENV_FILE=yes
+      OUTPUT_ENV_FILE="${OPTARG}"
       ;;
     *)
       usage >&2
@@ -101,24 +175,60 @@ done
 
 shift $((OPTIND-1))
 
-readonly DOCKER_IMAGE="$1"
+if [ ! -z "$1" ]  #accept DOCKER_IMAGE loaded from env file
+then
+  DOCKER_IMAGE="$1"
+fi
 
-
-COMMAND+=" ${@:2}"  #if run interactively the command will simply be appended. Will not start interactively but will prevent an error in case both -i and a command is provided
+if [ -z "${COMMAND}" ]
+then
+  if [ ! -z "$2" ]  #accept DOCKER_IMAGE loaded from env file
+  then
+    COMMAND="${@:2}"
+  else
+    COMMAND="${INPUT_COMMAND}"  #only use command from env if no other command is provided
+  fi
+fi
 
 if [ -z "${DOCKER_IMAGE// }" -o -z "${COMMAND// }" ]  #remove spaces before checking if empty
 then
   usage >&2
   exit 1
 fi
-echo "${DOCKER_IMAGE}"
-echo "${COMMAND}"
 
 if [ -z "${CONTAINER_NAME// }" ]
 then
   CONTAINER_NAME=$(get_default_container_name ${DOCKER_IMAGE} "_")
-fi  
-
+fi
+if [[ "${DO_OUTPUT_ENV_FILE}" == "yes" ]]
+then
+  if [[ "${OUTPUT_ENV_FILE}" == "-" ]]
+  then
+    echo "DOCKER_IMAGE=${DOCKER_IMAGE}"
+    echo "DOCKER_USER=${DOCKER_USER}"
+    echo "DOCKER_VOLUME=${DOCKER_VOLUME}"
+    echo "DOCKER_WORKING_DIR=${DOCKER_WORKING_DIR}"
+    echo "CONTAINER_NAME=${CONTAINER_NAME}"
+    echo "ADDITIONAL_VOLUMES=\"${OUTPUT_ADDITIONAL_VOLUMES}\""
+    echo "RUNTIME_ENVIRONMENT_VARIABLES=\"${OUTPUT_ENVIRONMENT_VARIABLES}\""
+    echo "DEVICES=\"${OUTPUT_DEVICES}\""
+    echo "DO_INTERACTIVE=${DO_INTERACTIVE}"
+    echo "DO_NOT_DESTROY=${DO_NOT_DESTROY}"
+    echo "INPUT_COMMAND=\"${COMMAND}\""
+  else
+    echo "DOCKER_IMAGE=${DOCKER_IMAGE}" > "${OUTPUT_ENV_FILE}"
+    echo "DOCKER_USER=${DOCKER_USER}" >> "${OUTPUT_ENV_FILE}"
+    echo "DOCKER_VOLUME=${DOCKER_VOLUME}" >> "${OUTPUT_ENV_FILE}"
+    echo "DOCKER_WORKING_DIR=${DOCKER_WORKING_DIR}" >> "${OUTPUT_ENV_FILE}"
+    echo "CONTAINER_NAME=${CONTAINER_NAME}" >> "${OUTPUT_ENV_FILE}"
+    echo "ADDITIONAL_VOLUMES=\"${OUTPUT_ADDITIONAL_VOLUMES}\"" >> "${OUTPUT_ENV_FILE}"
+    echo "RUNTIME_ENVIRONMENT_VARIABLES=\"${OUTPUT_ENVIRONMENT_VARIABLES}\"" >> "${OUTPUT_ENV_FILE}"
+    echo "DEVICES=\"${OUTPUT_DEVICES}\"" >> "${OUTPUT_ENV_FILE}"
+    echo "DO_INTERACTIVE=${DO_INTERACTIVE}" >> "${OUTPUT_ENV_FILE}"
+    echo "DO_NOT_DESTROY=${DO_NOT_DESTROY}" >> "${OUTPUT_ENV_FILE}"
+    echo "INPUT_COMMAND=\"${COMMAND}\"" >> "${OUTPUT_ENV_FILE}"
+  fi
+fi
 
 set -x
-docker run ${DESTROY_FLAGS} ${INTERACTIVE_FLAGS} ${DEVICE_FLAGS} ${RUNTIME_ENVIRONMENT_VARIABLES} -v "${DOCKER_VOLUME}":"${DOCKER_WORKING_DIR}" ${ADDITIONAL_VOLUME_FLAGS} -w "${DOCKER_WORKING_DIR}" --name "${CONTAINER_NAME}" "${DOCKER_IMAGE}" $COMMAND
+docker run ${DESTROY_FLAGS} ${INTERACTIVE_FLAGS} ${DEVICE_FLAGS} ${RUNTIME_ENVIRONMENT_VARIABLE_FLAGS} -v "${DOCKER_VOLUME}":"${DOCKER_WORKING_DIR}" ${ADDITIONAL_VOLUME_FLAGS} -w "${DOCKER_WORKING_DIR}" --name "${CONTAINER_NAME}"  ${INTERACTIVE_FLAGS} "${DOCKER_IMAGE}" ${SH_PREFIX} $COMMAND
