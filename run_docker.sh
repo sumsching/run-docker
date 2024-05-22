@@ -61,6 +61,7 @@ OUTPUT_ENVIRONMENT_VARIABLES=""
 OUTPUT_ADDITIONAL_VOLUMES=""
 OUTPUT_DEVICES=""
 OUTPUT_COMMAND=""
+INTERACTIVE_SHELL="/bin/sh"
 
 OPTSTRING="hic:pn:v:V:e:d:u:w:EF:oO:"
 
@@ -103,7 +104,6 @@ then
   if [[ "${DO_INTERACTIVE}" == "yes" ]]
   then
     INTERACTIVE_FLAGS="-it"
-    SH_PREFIX="/bin/sh"
   fi
   if [[ "${DO_NOT_DESTROY}" == "yes" ]]
   then
@@ -120,7 +120,6 @@ while getopts "${OPTSTRING}" opt ; do
     i) #run container interactively
       DO_INTERACTIVE=yes
       INTERACTIVE_FLAGS="-it"
-      SH_PREFIX="/bin/sh"
       ;;
     c)
       COMMAND="${OPTARG}"
@@ -192,7 +191,12 @@ then
   fi
 fi
 
-if [ -z "${DOCKER_IMAGE// }" -o -z "${COMMAND// }" ]  #remove spaces before checking if empty
+if [[ "${DO_INTERACTIVE}" == "yes" ]]
+then
+  COMMAND="${INTERACTIVE_SHELL}" #interactive mode has precedence
+fi
+
+if [[ -z "${DOCKER_IMAGE// }" ||  -z "${COMMAND// }"  ]]  #remove spaces before checking if empty
 then
   usage >&2
   exit 1
