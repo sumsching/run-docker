@@ -62,8 +62,10 @@ OUTPUT_ADDITIONAL_VOLUMES=""
 OUTPUT_DEVICES=""
 OUTPUT_COMMAND=""
 
+OPTSTRING="hic:pn:v:V:e:d:u:w:EF:oO:"
+
 #enable other env file being sourced before option handling, so options are not overwritten by env file
-while getopts "hic:pn:v:V:e:d:u:w:EF:oO:" opt 2>/dev/null; do  #ignoring "illegal" options passed to getopts here
+while getopts "${OPTSTRING}" opt 2>/dev/null; do  #ignoring "illegal" options passed to getopts here
   case ${opt} in
     V)
       USE_ENV=yes
@@ -109,7 +111,7 @@ then
   fi
 fi
 
-while getopts "hic:pn:v:V:e:d:u:w:EF:oO:" opt ; do
+while getopts "${OPTSTRING}" opt ; do
   case ${opt} in
     h)
       usage
