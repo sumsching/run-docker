@@ -110,6 +110,7 @@ while getopts "ha:b:f:n:u:g:EV:oO:" opt; do
 done
 
 if [[ "${DO_OUTPUT_ENV_FILE}" == "yes" ]]
+then
   if [[ "${OUTPUT_ENV_FILE}" == "-" ]]
   then
     echo "DOCKER_IMAGE=${DOCKER_IMAGE}"
