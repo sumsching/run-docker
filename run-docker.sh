@@ -53,7 +53,7 @@ function get_default_container_name
 }
 
 readonly DOCKER_WORKING_DIR_DEFAULT=/root/source
-DOCKER_USER=root
+DOCKER_USER=""  #not defaulting to root to allow other default users of standard images like mysql
 DOCKER_WORKING_DIR="${DOCKER_WORKING_DIR_DEFAULT}"
 DOCKER_VOLUME="${PWD}"
 ADDITIONAL_VOLUME_FLAGS=""
@@ -155,6 +155,7 @@ while getopts "${OPTSTRING}" opt ; do
       ;;
     u)
       DOCKER_USER="${OPTARG}"
+      DOCKER_USER_FLAGS="-u ${DOCKER_USER}"
       if [[ "${DOCKER_WORKING_DIR}" != "${DOCKER_WORKING_DIR_DEFAULT}" ]]  #only change working dir if it hasn't been set by -w already
       then
 	    DOCKER_WORKING_DIR="/home/${DOCKER_USER}/source"
@@ -247,4 +248,4 @@ then
 fi
 
 set -x
-docker run ${DESTROY_FLAGS} ${INTERACTIVE_FLAGS} ${DEVICE_FLAGS} ${RUNTIME_ENVIRONMENT_VARIABLE_FLAGS} -v "${DOCKER_VOLUME}":"${DOCKER_WORKING_DIR}" ${ADDITIONAL_VOLUME_FLAGS} -w "${DOCKER_WORKING_DIR}" --name "${CONTAINER_NAME}"  ${INTERACTIVE_FLAGS} "${DOCKER_IMAGE}" ${SH_PREFIX} $COMMAND
+docker run ${DESTROY_FLAGS} ${INTERACTIVE_FLAGS} ${DEVICE_FLAGS} ${RUNTIME_ENVIRONMENT_VARIABLE_FLAGS} ${DOCKER_USER_FLAGS} -v "${DOCKER_VOLUME}":"${DOCKER_WORKING_DIR}" ${ADDITIONAL_VOLUME_FLAGS} -w "${DOCKER_WORKING_DIR}" --name "${CONTAINER_NAME}"  ${INTERACTIVE_FLAGS} "${DOCKER_IMAGE}" ${SH_PREFIX} $COMMAND
