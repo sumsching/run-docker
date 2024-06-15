@@ -2,23 +2,33 @@
 
 function usage
 {
+  local script_name=$(basename $(readlink -f $0))
   echo "Run any command inside a Docker container of the specified image"
-  echo "$0 [-hipnvVed] <image> [<command>]"
+  echo "$0 [-hipnuwvVedEFoO] <image> [<command>]"
   echo "-h                                            Print this help"
   echo "-i                                            Run an interactive shell inside the container. No command necessary"
   echo "-p                                            Persistent. Do not destroy the container after use"
   echo "-n <name>                                     Specify name for the container"
+  echo "-u <username>                                 Specify the user to select in the container and change working directory to /home/<username>/source"
+  echo "                                              -w will have precedence for choosing the working directory"
+  echo "-w <dir>                                      mountpoint inside the container for the main volume (default /root/source)"
   echo "-v <directory>                                Use a different directory as volume and working directory for command execution"
   echo "                                              The given command/path must be valid from *inside* the given volume"
   echo "-V <host_dir>:<container_dir>                 Mount the specified directory on the host to the <container_dir> path inside the container as an additional volume"
   echo "                                              Locations outside of the current directory must be specified as absolute paths."
   echo "                                              Tip: use 'readlink -f <relative path>' to still be able to specify a relative path"
-  echo '                                              e.g.: -V $(readlink -f ../WP_OTAP_TOOL):/home/c4builder/wp_otap_tool'
+  echo '                                              e.g.: -V $(readlink -f ../some_dir):/home/myuser/some_dir'
   echo "-e <FOO>=<bar>                                Set environment variables inside the container"
   echo "-d <device>[:<device in container>[:<mode>]]  Mount device into container. Optionally map to specific device in container."
   echo "                                              Optionally provide mode of device (r)ead, (w)rite, (m)knod"
   echo "                                              e.g.: -d /dev/ttyACM0:/dev/ttyACM0:rwm"
   echo "                                              or:   -d /dev/ttyACM0"
+  echo "-o                                            write ${script_name} options into an env file. (default rund.env)"
+  echo "-O <env file>                                 write ${script_name} options into <env file>"
+  echo "                                              To use the env file, it must be specified with -F in each ${script_name}"
+  echo "-F <env file>                                 read another env file for ${script_name} options"
+  echo "                                              An alternative env file can be created with -O"
+  echo "-E                                            do not use env file"
   echo 
   echo "example:"
   echo "$0 busybox ps -f"
