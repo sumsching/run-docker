@@ -68,7 +68,7 @@ OPTSTRING="hic:pn:v:V:e:d:u:w:EF:oO:"
 #enable other env file being sourced before option handling, so options are not overwritten by env file
 while getopts "${OPTSTRING}" opt 2>/dev/null; do  #ignoring "illegal" options passed to getopts here
   case ${opt} in
-    V)
+    F)
       USE_ENV=yes
       ENV_FILE="${OPTARG}"
       ;;
