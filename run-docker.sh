@@ -156,7 +156,7 @@ while getopts "${OPTSTRING}" opt ; do
     u)
       DOCKER_USER="${OPTARG}"
       DOCKER_USER_FLAGS="-u ${DOCKER_USER}"
-      if [[ "${DOCKER_WORKING_DIR}" != "${DOCKER_WORKING_DIR_DEFAULT}" ]]  #only change working dir if it hasn't been set by -w already
+      if [[ "${DOCKER_WORKING_DIR}" == "${DOCKER_WORKING_DIR_DEFAULT}" ]]  #only change working dir if it hasn't been set by -w already
       then
 	    DOCKER_WORKING_DIR="/home/${DOCKER_USER}/source"
       fi
