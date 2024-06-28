@@ -23,6 +23,8 @@ function usage
   echo "                                              Optionally provide mode of device (r)ead, (w)rite, (m)knod"
   echo "                                              e.g.: -d /dev/ttyACM0:/dev/ttyACM0:rwm"
   echo "                                              or:   -d /dev/ttyACM0"
+  echo "-C <capability>                               add capability to container"
+  echo "-P                                            run container in privileged mode. Use at your own risk"
   echo "-o                                            write ${script_name} options into an env file. (default rund.env)"
   echo "-O <env file>                                 write ${script_name} options into <env file>"
   echo "                                              To use the env file, it must be specified with -F in each ${script_name}"
@@ -62,6 +64,8 @@ COMMAND=""
 DESTROY_FLAGS="--rm"  #destroy container after use
 RUNTIME_ENVIRONMENT_VARIABLE_FLAGS=""
 DEVICE_FLAGS=""
+CAPABILITY_FLAGS=""
+PRIVILEGED_FLAGS=""
 
 USE_ENV=yes
 ENV_FILE=rund.env
@@ -70,10 +74,11 @@ DO_OUTPUT_ENV_FILE=no
 OUTPUT_ENVIRONMENT_VARIABLES=""
 OUTPUT_ADDITIONAL_VOLUMES=""
 OUTPUT_DEVICES=""
+OUTPUT_CAPABILITIES=""
 OUTPUT_COMMAND=""
 INTERACTIVE_SHELL="/bin/sh"
 
-OPTSTRING="hic:pn:v:V:e:d:u:w:EF:oO:"
+OPTSTRING="hic:pn:v:V:e:d:u:w:C:PEF:oO:"
 
 #enable other env file being sourced before option handling, so options are not overwritten by env file
 while getopts "${OPTSTRING}" opt 2>/dev/null; do  #ignoring "illegal" options passed to getopts here
@@ -118,6 +123,10 @@ then
   if [[ "${DO_NOT_DESTROY}" == "yes" ]]
   then
     DESTROY_FLAGS=""
+  fi
+  if [[ "${DO_PRIVILEGED}" == "yes" ]]
+  then
+    PRIVILEGED_FLAGS="--privileged"
   fi
 fi
 
@@ -166,6 +175,14 @@ while getopts "${OPTSTRING}" opt ; do
       ;;
     w)
       DOCKER_WORKING_DIR="${OPTARG}"
+      ;;
+    C)
+      CAPABILITY_FLAGS=" --cap-add ${OPTARG}"
+      OUTPUT_CAPABILITIES=" ${OPTARG}"
+      ;;
+    P)
+      DO_PRIVILEGED=yes
+      PRIVILEGED_FLAGS="--privileged"
       ;;
     E)
       #just ignore, because -E is handled in former getopts call
@@ -235,6 +252,7 @@ then
     echo "DEVICES=\"${OUTPUT_DEVICES}\""
     echo "DO_INTERACTIVE=${DO_INTERACTIVE}"
     echo "DO_NOT_DESTROY=${DO_NOT_DESTROY}"
+    echo "DO_PRIVILEGED=${DO_PRIVILEGED}"
     echo "INPUT_COMMAND=\"${COMMAND}\""
   else
     echo "DOCKER_IMAGE=${DOCKER_IMAGE}" > "${OUTPUT_ENV_FILE}"
@@ -247,9 +265,10 @@ then
     echo "DEVICES=\"${OUTPUT_DEVICES}\"" >> "${OUTPUT_ENV_FILE}"
     echo "DO_INTERACTIVE=${DO_INTERACTIVE}" >> "${OUTPUT_ENV_FILE}"
     echo "DO_NOT_DESTROY=${DO_NOT_DESTROY}" >> "${OUTPUT_ENV_FILE}"
+    echo "DO_PRIVILEGED=${DO_PRIVILEGED}" >> "${OUTPUT_ENV_FILE}"
     echo "INPUT_COMMAND=\"${COMMAND}\"" >> "${OUTPUT_ENV_FILE}"
   fi
 fi
 
 set -x
-docker run ${DESTROY_FLAGS} ${INTERACTIVE_FLAGS} ${DEVICE_FLAGS} ${RUNTIME_ENVIRONMENT_VARIABLE_FLAGS} ${DOCKER_USER_FLAGS} -v "${DOCKER_VOLUME}":"${DOCKER_WORKING_DIR}" ${ADDITIONAL_VOLUME_FLAGS} -w "${DOCKER_WORKING_DIR}" --name "${CONTAINER_NAME}"  ${INTERACTIVE_FLAGS} "${DOCKER_IMAGE}" ${SH_PREFIX} $COMMAND
+docker run ${DESTROY_FLAGS} ${INTERACTIVE_FLAGS} ${DEVICE_FLAGS} ${RUNTIME_ENVIRONMENT_VARIABLE_FLAGS} ${DOCKER_USER_FLAGS} -v "${DOCKER_VOLUME}":"${DOCKER_WORKING_DIR}" ${ADDITIONAL_VOLUME_FLAGS} -w "${DOCKER_WORKING_DIR}" --name "${CONTAINER_NAME}" ${CAPABILITY_FLAGS} ${PRIVILEGED_FLAGS} ${INTERACTIVE_FLAGS} "${DOCKER_IMAGE}" ${SH_PREFIX} $COMMAND
