@@ -99,7 +99,7 @@ then
   for var in ${RUNTIME_ENVIRONMENT_VARIABLES[@]}
   do
     RUNTIME_ENVIRONMENT_VARIABLE_FLAGS=+=" -e ${var}"
-    OUTPUT_ENVIRONMENT_VARIABLES+=" ${var}"  #The output should include former env variables
+    RUNTIME_ENVIRONMENT_VARIABLES+=" ${var}"  #The output should include former env variables
   done
   for volume in ${ADDITIONAL_VOLUMES[@]}
   do
@@ -108,7 +108,7 @@ then
   done
   for device in ${DEVICES[@]}
   do
-      DEVICE_FLAGS=+=" -d ${device}"
+      DEVICE_FLAGS+=" --device ${device}"
       OUTPUT_DEVICES+=" ${device}"  #The output should include former env variables
   done
   if [[ "${DO_INTERACTIVE}" == "yes" ]]
@@ -146,12 +146,15 @@ while getopts "${OPTSTRING}" opt ; do
       ;;
     V) #enables access to files outside of the current directory
       ADDITIONAL_VOLUME_FLAGS+="-v ${OPTARG} "
+      ADDITIONAL_VOLUMES+=" ${OPTARG}"
       ;;
     e)
       RUNTIME_ENVIRONMENT_VARIABLE_FLAGS+=" -e ${OPTARG}"
+      RUNTIME_ENVIRONMENT_VARIABLES+=" ${OPTARG}"
       ;;
     d)
       DEVICE_FLAGS+="--device ${OPTARG} "
+      OUTPUT_DEVICES+=" ${OPTARG}"
       ;;
     u)
       DOCKER_USER="${OPTARG}"
@@ -219,6 +222,7 @@ then
 fi
 if [[ "${DO_OUTPUT_ENV_FILE}" == "yes" ]]
 then
+  #TODO replace with exec 1>OUTPUT_ENV_FILE
   if [[ "${OUTPUT_ENV_FILE}" == "-" ]]
   then
     echo "DOCKER_IMAGE=${DOCKER_IMAGE}"
