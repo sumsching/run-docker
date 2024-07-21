@@ -108,13 +108,18 @@ then
   done
   for volume in ${ADDITIONAL_VOLUMES[@]}
   do
-    ADDITIONAL_VOLUME_FLAGS=+=" -v ${volume}"
+    ADDITIONAL_VOLUME_FLAGS+=" -v ${volume}"
     OUTPUT_ADDITIONAL_VOLUMES+=" ${volume}"  #The output should include former env variables
   done
   for device in ${DEVICES[@]}
   do
       DEVICE_FLAGS+=" --device ${device}"
       OUTPUT_DEVICES+=" ${device}"  #The output should include former env variables
+  done
+  for cap in ${CAPABILITIES[@]}
+  do
+      CAPABILITY_FLAGS+=" --cap-add ${cap}"
+      OUTPUT_CAPABILITIES+=" ${cap}"  #The output should include former env variables
   done
   if [[ "${DO_INTERACTIVE}" == "yes" ]]
   then
@@ -155,7 +160,7 @@ while getopts "${OPTSTRING}" opt ; do
       ;;
     V) #enables access to files outside of the current directory
       ADDITIONAL_VOLUME_FLAGS+="-v ${OPTARG} "
-      ADDITIONAL_VOLUMES+=" ${OPTARG}"
+      OUTPUT_ADDITIONAL_VOLUMES+=" ${OPTARG}"
       ;;
     e)
       RUNTIME_ENVIRONMENT_VARIABLE_FLAGS+=" -e ${OPTARG}"
@@ -178,7 +183,7 @@ while getopts "${OPTSTRING}" opt ; do
       ;;
     C)
       CAPABILITY_FLAGS=" --cap-add ${OPTARG}"
-      OUTPUT_CAPABILITIES=" ${OPTARG}"
+      OUTPUT_CAPABILITIES+=" ${OPTARG}"
       ;;
     P)
       DO_PRIVILEGED=yes
@@ -252,6 +257,7 @@ then
     echo "DEVICES=\"${OUTPUT_DEVICES}\""
     echo "DO_INTERACTIVE=${DO_INTERACTIVE}"
     echo "DO_NOT_DESTROY=${DO_NOT_DESTROY}"
+    echo "CAPABILITIES=\"${OUTPUT_CAPABILITIES}\""
     echo "DO_PRIVILEGED=${DO_PRIVILEGED}"
     echo "INPUT_COMMAND=\"${COMMAND}\""
   else
@@ -265,6 +271,7 @@ then
     echo "DEVICES=\"${OUTPUT_DEVICES}\"" >> "${OUTPUT_ENV_FILE}"
     echo "DO_INTERACTIVE=${DO_INTERACTIVE}" >> "${OUTPUT_ENV_FILE}"
     echo "DO_NOT_DESTROY=${DO_NOT_DESTROY}" >> "${OUTPUT_ENV_FILE}"
+    echo "CAPABILITIES=\"${OUTPUT_CAPABILITIES}\"" >> "${OUTPUT_ENV_FILE}"
     echo "DO_PRIVILEGED=${DO_PRIVILEGED}" >> "${OUTPUT_ENV_FILE}"
     echo "INPUT_COMMAND=\"${COMMAND}\"" >> "${OUTPUT_ENV_FILE}"
   fi
