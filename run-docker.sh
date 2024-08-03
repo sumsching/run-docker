@@ -103,7 +103,7 @@ then
   source "${ENV_FILE}"
   for var in ${RUNTIME_ENVIRONMENT_VARIABLES[@]}
   do
-    RUNTIME_ENVIRONMENT_VARIABLE_FLAGS=+=" -e ${var}"
+    RUNTIME_ENVIRONMENT_VARIABLE_FLAGS+=" -e ${var}"
     RUNTIME_ENVIRONMENT_VARIABLES+=" ${var}"  #The output should include former env variables
   done
   for volume in ${ADDITIONAL_VOLUMES[@]}
