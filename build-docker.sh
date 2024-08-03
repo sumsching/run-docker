@@ -21,7 +21,6 @@ function usage
 }
 
 BUILD_CONTEXT=.
-DOCKERFILE=${BUILD_CONTEXT}/Dockerfile
 BUILD_ARGS=""
 TAG_OPTION=""
 USE_ENV=yes
@@ -108,6 +107,10 @@ while getopts "ha:b:f:n:u:g:EV:oO:" opt; do
       ;;
   esac
 done
+if [ -z "${DOCKERFILE}" ]
+then
+  DOCKERFILE=${BUILD_CONTEXT}/Dockerfile
+fi
 
 if [[ "${DO_OUTPUT_ENV_FILE}" == "yes" ]]
 then
