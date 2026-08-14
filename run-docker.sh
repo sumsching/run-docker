@@ -76,9 +76,9 @@ OUTPUT_ADDITIONAL_VOLUMES=""
 OUTPUT_DEVICES=""
 OUTPUT_CAPABILITIES=""
 OUTPUT_COMMAND=""
-INTERACTIVE_SHELL="/bin/sh"
+INTERACTIVE_SHELL="/bin/bash"
 
-OPTSTRING="hic:pn:v:V:e:d:u:w:C:PEF:oO:"
+OPTSTRING="hic:pn:v:V:e:d:u:w:C:PEF:oO:s:"
 
 #enable other env file being sourced before option handling, so options are not overwritten by env file
 while getopts "${OPTSTRING}" opt 2>/dev/null; do  #ignoring "illegal" options passed to getopts here
@@ -201,6 +201,9 @@ while getopts "${OPTSTRING}" opt ; do
     O)
       DO_OUTPUT_ENV_FILE=yes
       OUTPUT_ENV_FILE="${OPTARG}"
+      ;;
+    s)
+      INTERACTIVE_SHELL="${OPTARG}"
       ;;
     *)
       usage >&2
