@@ -46,7 +46,7 @@ function get_default_container_name
     echo "usage: get_default_container_name <container-name before number> <number separator>" >&2
     return 1
   fi
-  local container_name_stem=${1}
+  local container_name_stem=${1%%:*}  #strip tags
   local number_separator=${2:-_}
   local highest_container_number=$(docker ps -a --filter name=^${container_name_stem} --format '{{.Names}}' | sort -r | head -1)
   highest_container_number=${highest_container_number##*${number_separator}}
