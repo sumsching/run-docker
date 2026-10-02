@@ -2,8 +2,8 @@
 
 function usage
 {
-  echo "$0 [-bfnuh] -n <image name>"
-
+  local script_name=$(basename $(readlink -f $0))
+  echo "$0 [-bfnuoEh] [-O <env file>] [-F <env file>] -n <image name>"
   echo "-a <ARG>=<VAL>    Specify build arg (Dockerfile variable) ARG and set it to value VAL. The Dockerfile must handle the variable for it to have an effect"
   echo "-b <directory>    Use <directory> as build context, containing files that are supposed to be used during building the image (default: ./)"
   echo "-f <Dockerfile>   Specify which Dockerfile to use (default: <build context>/Dockerfile)"
@@ -13,6 +13,12 @@ function usage
   echo "-g <gid>          Specify Dockerfile variable GID and set it to <gid>"
   echo "                  Meant to use another group id for the user in the docker container."
   echo "                  The Dockerfile must handle the UID and GID for the variables (build args) to have an effect"
+  echo "-o                write ${script_name} options into an env file. (default buildd.env)"
+  echo "-O <env file>     write ${script_name} options into <env file>"
+  echo "                  To use the env file, it must be specified with -F in each ${script_name}"
+  echo "-F <env file>     read another env file for ${script_name} options"
+  echo "                  An alternative env file can be created with -O"
+  echo "-E                do not use env file"
   echo "-h                Print this help"
   echo
   echo "$0 -n custom_image"

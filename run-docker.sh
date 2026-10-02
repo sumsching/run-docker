@@ -23,6 +23,7 @@ function usage
   echo "                                              Optionally provide mode of device (r)ead, (w)rite, (m)knod"
   echo "                                              e.g.: -d /dev/ttyACM0:/dev/ttyACM0:rwm"
   echo "                                              or:   -d /dev/ttyACM0"
+  echo "-s <shell>                                    Use <shell> as interactive shell. (default: bash)"
   echo "-C <capability>                               add capability to container"
   echo "-P                                            run container in privileged mode. Use at your own risk"
   echo "-o                                            write ${script_name} options into an env file. (default rund.env)"
